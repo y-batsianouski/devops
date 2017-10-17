@@ -1,0 +1,8 @@
+- name: reload consul service
+  command: systemctl daemon-reload
+
+- name: restart consul
+  service:
+    name: vault
+    state: restarted
+    enabled: true

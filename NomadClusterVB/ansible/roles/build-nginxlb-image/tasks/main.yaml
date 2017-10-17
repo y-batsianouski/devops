@@ -1,0 +1,20 @@
+- name: Remove local docker image nginx-lb
+  docker_image:
+    name: "nginx-lb:latest"
+    state: absent
+
+- name: Building docker image nginx-lb:latest
+  docker_image:
+    name: "nginx-lb:latest"
+    path: "{{ role_path }}/../../../docker/nginx"
+
+- file:
+    dest: "{{ role_path }}/../../../docker/nginx/outputs"
+    state: directory
+
+- file:
+    dest: "{{ role_path }}/../../../docker/nginx/outputs/nginx-lb.tar"
+    state: absent
+
+- name: export image archive
+  command: docker save nginx-lb:latest -o {{ role_path }}/../../../docker/nginx/outputs/nginx-lb.tar

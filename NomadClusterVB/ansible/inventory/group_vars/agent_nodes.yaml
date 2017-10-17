@@ -1,0 +1,3 @@
+consul_server: false
+nomad_server: false
+nomad_node_class: ""

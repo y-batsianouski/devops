@@ -1,0 +1,174 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://atlas.hashicorp.com/search.
+  config.vm.box = "geerlingguy/centos7"
+
+  config.hostmanager.enabled = true
+  config.hostmanager.manage_host = true
+  config.hostmanager.manage_guest = true
+
+  $cluster_name = "NomadCluster-"
+  $subnet = "192.168.33"
+
+  $provision_base_script=<<SCRIPT
+sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+systemctl restart sshd
+
+echo "net.ipv4.ip_forward=1" > /etc/sysctl.conf
+systemctl restart network
+yum update -y
+SCRIPT
+
+  {
+    "node-master-1" => {"ip" => "11"},
+    "node-master-2" => {"ip" => "12"},
+    "node-master-3" => {"ip" => "13"},
+  }.each do |node, data|
+    config.vm.define node do |vm|
+      vm.vm.network "private_network", ip: $subnet+ "." + data["ip"]
+      vm.vm.hostname = node
+
+      vm.hostmanager.aliases = node+".nomad.local"
+
+      vm.vm.provider "virtualbox" do |vb|
+        vb.name = $cluster_name + node
+        vb.memory = 512
+        vb.cpus = 1
+        vb.linked_clone = true
+      end
+      
+      vm.vm.provision "shell", inline: $provision_base_script
+    end
+  end
+
+  {
+    "node-private-1" => {"ip" => "21", "mem" => 1024},
+    "node-private-2" => {"ip" => "22", "mem" => 1024},
+    "node-private-3" => {"ip" => "23", "mem" => 1024},
+    "node-private-4" => {"ip" => "24", "mem" => 1024},
+  }.each do |node, data|
+    config.vm.define node do |vm|
+      vm.vm.network "private_network", ip: $subnet+ "." + data["ip"]
+      vm.vm.hostname = node
+
+      vm.hostmanager.aliases = node + ".nomad.local"
+
+      vm.vm.provider "virtualbox" do |vb|
+        vb.name = $cluster_name + node
+        vb.memory = data["mem"]
+        vb.cpus = 1
+        vb.linked_clone = true
+      end
+      
+      vm.vm.provision "shell", inline: $provision_base_script
+    end
+  end
+
+  config.vm.define "node-public-1" do |vm|
+      vm.vm.network "private_network", ip: "192.168.33.31"
+      vm.vm.hostname = "node-public-1"
+
+      vm.hostmanager.aliases = %w(node-public-1.nomad.local nomad.local)
+
+      vm.vm.provider "virtualbox" do |vb|
+        vb.name = $cluster_name + "node-public-1"
+        vb.memory = 512
+        vb.cpus = 1
+        vb.linked_clone = true
+      end
+      
+      vm.vm.provision "shell", inline: $provision_base_script
+    end
+
+  config.vm.define "devmachine" do |vm|
+    $dev_machine_provision_script = <<SCRIPT
+
+export VAULT_VERSION=0.8.3
+export CONSUL_VERSION=0.9.3
+export NOMAD_VERSION=0.6.3
+
+yum update -y
+yum install -y epel-release 
+yum install -y \
+  net-tools \
+  ansible \
+  python-pip \
+  unzip \
+  httpd-tools \
+  yum-utils \
+  device-mapper-persistent-data \
+  lvm2 \
+  bind-utils
+
+pip install --upgrade pip
+pip install \
+  requests \
+  docker-py \
+  cryptography
+
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+rpm --import https://yum.dockerproject.org/gpg
+yum install -y docker-ce
+
+sudo systemctl enable docker
+sudo systemctl restart docker
+sudo usermod -a -G docker vagrant
+
+curl -L https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip -o /tmp/vault.zip
+cd /usr/bin
+unzip /tmp/vault.zip
+chmod +x /usr/bin/vault
+rm -rf /tmp/vault.zip
+
+curl -L https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip -o /tmp/consul.zip
+cd /usr/bin
+unzip /tmp/consul.zip
+chmod +x /usr/bin/consul
+rm -rf /tmp/consul.zip
+
+curl -L https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip -o /tmp/nomad.zip
+cd /usr/bin
+unzip /tmp/nomad.zip
+chmod +x /usr/bin/nomad
+rm -rf /tmp/nomad.zip
+
+echo "net.ipv4.ip_forward=1" > /etc/sysctl.conf
+systemctl restart network
+
+echo "cd /vagrant" >> /home/vagrant/.bash_profile
+sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+systemctl restart sshd
+
+echo 'export  NOMAD_CLIENT_CERT="/vagrant/ca/outputs/dev-machine.nomad.local/dev-machine.nomad.local.crt"' >> /etc/bashrc
+echo 'export  NOMAD_CLIENT_KEY="/vagrant/ca/outputs/dev-machine.nomad.local/dev-machine.nomad.local.key"' >> /etc/bashrc
+
+SCRIPT
+
+    vm.vm.box = "geerlingguy/centos7"
+    vm.vm.network "private_network", ip: "192.168.33.100"
+    vm.vm.synced_folder ".", "/vagrant", type: "virtualbox"
+    vm.vm.hostname = "dev-machine"
+
+    vm.hostmanager.aliases = %w(dev-machine.nomad.local)
+
+    vm.vm.provider "virtualbox" do |vb|
+      vb.name = $cluster_name + "dev-machine"
+      vb.memory = 768
+      vb.cpus = 1
+      vb.linked_clone = true
+    end
+    
+    vm.vm.provision "shell", inline: $dev_machine_provision_script
+  end
+end

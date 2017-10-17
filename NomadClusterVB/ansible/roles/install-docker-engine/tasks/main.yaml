@@ -1,0 +1,13 @@
+---
+# - name: remove old docker engine
+#   include: _remove_old_docker_engine.yaml
+
+- name: install docker engine
+  include: _install_docker_engine.yaml
+
+- name: "enable and start docker service"
+  systemd:
+    enabled: yes
+    daemon_reload: yes
+    state: started
+    name: "docker.service"

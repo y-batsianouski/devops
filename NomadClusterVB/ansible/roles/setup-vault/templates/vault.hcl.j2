@@ -1,0 +1,39 @@
+max_lease_ttl = "4380h"
+cluster_name = "nomad"
+
+storage "consul" {
+  address = "{{ inventory_hostname }}:8501"
+  path    = "vault/"
+  check_timeout = "1m"
+  scheme = "https"
+  service = "vault-server"
+  tls_ca_file = "/opt/consul/config/ssl/ca.cert.pem"
+  tls_cert_file = "/opt/vault/config/ssl/{{ inventory_hostname }}.crt"
+  tls_key_file = "/opt/vault/config/ssl/{{ inventory_hostname }}.key"
+
+  redirect_addr = "https://{{ inventory_hostname }}:8200"
+  cluster_addr = "https://{{ inventory_hostname }}:8201"
+}
+
+ha_storage "consul" {
+  address = "{{ inventory_hostname }}:8501"
+  path    = "vault/"
+  check_timeout = "1m"
+  scheme = "https"
+  service = "vault-server"
+  tls_ca_file = "/opt/consul/config/ssl/ca.cert.pem"
+  tls_cert_file = "/opt/vault/config/ssl/{{ inventory_hostname }}.crt"
+  tls_key_file = "/opt/vault/config/ssl/{{ inventory_hostname }}.key"
+
+  redirect_addr = "https://{{ inventory_hostname }}:8200"
+  cluster_addr = "https://{{ inventory_hostname }}:8201"
+}
+
+listener "tcp" {
+  address = "{{ hostvars[inventory_hostname]['ansible_' + network_interface]['ipv4']['address'] }}:8200"
+  tls_min_version    = "tls12"
+  tls_cert_file      = "/opt/vault/config/ssl/{{ inventory_hostname }}.crt"
+  tls_key_file       = "/opt/vault/config/ssl/{{ inventory_hostname }}.key"
+  tls_client_ca_file = "/opt/consul/config/ssl/ca.cert.pem"
+
+}

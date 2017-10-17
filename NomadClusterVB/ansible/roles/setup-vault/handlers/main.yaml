@@ -1,0 +1,8 @@
+- name: reload vault service
+  command: systemctl daemon-reload
+
+- name: restart vault
+  service:
+    name: vault
+    state: restarted
+    enabled: true

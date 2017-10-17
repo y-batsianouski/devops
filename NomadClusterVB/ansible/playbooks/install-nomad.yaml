@@ -1,0 +1,5 @@
+- hosts: agent_nodes:master_nodes
+  remote_user: root
+  become: yes
+  roles:
+    - setup-nomad

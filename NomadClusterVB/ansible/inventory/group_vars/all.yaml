@@ -1,0 +1,19 @@
+---
+ansible_user: vagrant
+ansible_ssh_pass: vagrant
+
+network_interface: "enp0s8"
+
+docker_compose_version: 1.14.0
+
+hashicorp_consul_version: 0.9.3
+hashicorp_nomad_version: 0.6.3
+hashicorp_vault_version: 0.8.3
+
+consul_encrypt_key: "AO+RB0hqd8jox+IhroRUkA=="
+consul_acl_master_token: 372a1eba-37d4-4ae3-866d-241ff1a23b9d
+
+nomad_encrypt_key: "DIwVXGOxo10k+AMti5ZH8w=="
+nomad_vault_token: d14bfcbe-dab4-8250-165c-855bcd09a0b7
+
+nomad_meta: false

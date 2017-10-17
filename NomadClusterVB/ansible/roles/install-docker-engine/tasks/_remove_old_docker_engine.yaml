@@ -1,0 +1,36 @@
+---
+- name: remove old docker package
+  yum:
+    name: docker
+    state: absent
+    update_cache: yes
+
+- name: remove old docker-common package
+  yum:
+    name: docker-common
+    state: absent
+    update_cache: yes
+
+- name: remove old container-selinux package
+  yum:
+    name: container-selinux
+    state: absent
+    update_cache: yes
+
+- name: remove old docker-selinux package
+  yum:
+    name: docker-selinux
+    state: absent
+    update_cache: yes
+
+- name: remove old docker-engine package
+  yum:
+    name: docker-engine
+    state: absent
+    update_cache: yes
+
+- name: remove old docker-engine-selinux package
+  yum:
+    name: docker-engine-selinux
+    state: absent
+    update_cache: yes

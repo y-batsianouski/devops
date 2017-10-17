@@ -1,0 +1,2 @@
+ca_path_to_root: ../../ca/ca/certs/ca.cert.pem
+ca_path_to_intermediate: ../../ca/ca/intermediate/certs/intermediate.cert.pem

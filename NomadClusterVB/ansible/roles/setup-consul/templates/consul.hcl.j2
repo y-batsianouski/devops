@@ -1,0 +1,43 @@
+{
+  "datacenter": "nomad",
+  "data_dir": "/consul/data",
+  "log_level": "INFO",
+  "bind_addr": "{{ hostvars[inventory_hostname]['ansible_' + network_interface]['ipv4']['address'] }}",
+  "addresses": {
+    "http": "{{ hostvars[inventory_hostname]['ansible_' + network_interface]['ipv4']['address'] }}",
+    "https": "{{ hostvars[inventory_hostname]['ansible_' + network_interface]['ipv4']['address'] }}",
+    "dns": "{{ hostvars[inventory_hostname]['ansible_' + network_interface]['ipv4']['address'] }}"
+  },
+  "advertise_addr": "{{ hostvars[inventory_hostname]['ansible_' + network_interface]['ipv4']['address'] }}",
+  "client_addr": "{{ hostvars[inventory_hostname]['ansible_' + network_interface]['ipv4']['address'] }}",
+  "ports": {
+{% if consul_server == true %}
+    "https": 8501,
+    "dns": 53
+{% else %}
+    "https": 8501,
+    "dns": 53
+{% endif %}
+  },
+  "retry_join": [
+    "node-master-1.nomad.local",
+    "node-master-2.nomad.local",
+    "node-master-3.nomad.local"
+  ],
+  "recursors": [
+    "8.8.8.8",
+    "8.8.4.4"
+  ],
+{% if consul_server == true %}
+  "server": true,
+  "bootstrap_expect": 3,
+  "ui": true,
+{% endif %}
+  "key_file": "/opt/consul/config/ssl/{{ inventory_hostname }}.key",
+  "cert_file": "/opt/consul/config/ssl/{{ inventory_hostname }}.crt",
+  "ca_file": "/opt/consul/config/ssl/ca.cert.pem",
+  "data_dir": "/opt/consul/data",
+  "verify_incoming": true,
+  "verify_outgoing": true,
+  "encrypt": "{{ consul_encrypt_key }}"
+}

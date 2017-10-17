@@ -1,0 +1,19 @@
+---
+- name: copy rootca
+  copy:
+    dest: "/etc/pki/ca-trust/source/anchors/dev-rootca.pem"
+    src: "{{ ca_path_to_root }}"
+    owner: root
+    group: wheel
+    mode: "u=rwxrxrx"
+
+- name: copy intermediate
+  copy:
+    dest: "/etc/pki/ca-trust/source/anchors/dev-intermediate.pem"
+    src: "{{ ca_path_to_intermediate }}"
+    owner: root
+    group: wheel
+    mode: "u=rwxrxrx"
+
+- name: "add rootca and intermediate to trusted"
+  command: update-ca-trust

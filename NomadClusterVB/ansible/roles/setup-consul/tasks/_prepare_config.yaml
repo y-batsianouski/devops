@@ -1,0 +1,73 @@
+---
+- file:
+    state: directory
+    path: /opt/consul
+    
+- file:
+    state: directory
+    path: /opt/consul/config
+    
+- file:
+    state: directory
+    path: /opt/consul/config/ssl
+    
+- file:
+    state: directory
+    path: /opt/consul/data
+    
+- name: copy rootca
+  copy:
+    dest: "/opt/consul/config/ssl/ca.cert.pem"
+    src: "../../ca/ca/certs/ca.cert.pem"
+    owner: root
+    group: wheel
+    mode: "u=rwxrxrx"
+    
+- name: copy consul server key
+  copy:
+    dest: "/opt/consul/config/ssl/{{ inventory_hostname }}.key"
+    src: "../../ca/outputs/{{ inventory_hostname }}/{{ inventory_hostname }}.key"
+    owner: root
+    group: wheel
+    mode: "u=rwxrxrx"
+    
+- name: copy consul server certificate
+  copy:
+    dest: "/opt/consul/config/ssl/{{ inventory_hostname }}.crt"
+    src: "../../ca/outputs/{{ inventory_hostname }}/{{ inventory_hostname }}.crt"
+    owner: root
+    group: wheel
+    mode: "u=rwxrxrx"
+
+- unarchive:
+    remote_src: yes
+    dest: /usr/bin
+    src: https://releases.hashicorp.com/consul/{{ hashicorp_consul_version }}/consul_{{ hashicorp_consul_version }}_linux_amd64.zip
+    owner: root
+    group: wheel
+    mode: 0755
+
+- template:
+    dest: /opt/consul/config/consul.hcl
+    src: "consul.hcl.j2"
+    owner: root
+    group: wheel
+    mode: "u=rwx,g=r"
+  notify: 
+    - restart consul
+    - reload consul service
+
+- template:
+    dest: /etc/systemd/system/consul.service
+    src: "consul.service.j2"
+    owner: root
+    group: wheel
+    mode: "u=rwx,g=r"
+  notify: 
+    - restart consul
+    - reload consul service
+
+- service:
+    name: consul
+    state: reloaded
+    enabled: true

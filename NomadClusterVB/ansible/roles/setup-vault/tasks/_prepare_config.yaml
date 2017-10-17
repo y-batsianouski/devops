@@ -1,0 +1,78 @@
+---
+- file:
+    state: directory
+    path: /opt/vault
+    
+- file:
+    state: directory
+    path: /opt/vault/config
+    
+- file:
+    state: directory
+    path: /opt/vault/config/ssl
+    
+- file:
+    state: directory
+    path: /opt/vault/data
+    
+- name: copy rootca
+  copy:
+    dest: "/opt/vault/config/ssl/ca.cert.pem"
+    # src: "../../ca/ca/certs/ca.cert.pem"
+    src: ../../ca/ca/intermediate/certs/intermediate.cert.chain.pem
+    owner: root
+    group: wheel
+    mode: "u=rwxrxrx"
+    
+- name: copy vault server key
+  copy:
+    dest: "/opt/vault/config/ssl/{{ inventory_hostname }}.key"
+    src: "../../ca/outputs/{{ inventory_hostname }}/{{ inventory_hostname }}.key"
+    owner: root
+    group: wheel
+    mode: "u=rwxrxrx"
+    
+- name: copy vault server certificate
+  copy:
+    dest: "/opt/vault/config/ssl/{{ inventory_hostname }}.crt"
+    src: "../../ca/outputs/{{ inventory_hostname }}/{{ inventory_hostname }}.crt"
+    owner: root
+    group: wheel
+    mode: "u=rwxrxrx"
+
+- yum:
+    name: unzip
+    state: latest
+
+- unarchive:
+    remote_src: yes
+    dest: /usr/bin
+    src: https://releases.hashicorp.com/vault/{{ hashicorp_vault_version }}/vault_{{ hashicorp_vault_version }}_linux_amd64.zip
+    owner: root
+    group: wheel
+    mode: 0755
+
+- template:
+    dest: /opt/vault/config/vault.hcl
+    src: "vault.hcl.j2"
+    owner: root
+    group: wheel
+    mode: "u=rwx,g=r"
+  notify: 
+    - restart vault
+    - reload vault service
+
+- template:
+    dest: /etc/systemd/system/vault.service
+    src: "vault.service.j2"
+    owner: root
+    group: wheel
+    mode: "u=rwx,g=r"
+  notify: 
+    - restart vault
+    - reload vault service
+
+- service:
+    name: vault
+    state: started
+    enabled: true

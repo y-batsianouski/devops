@@ -1,0 +1,8 @@
+---
+- include: build-nginxlb-docker-image.yaml
+
+- hosts: "public_nodes"
+  remote_user: root
+  become: yes
+  roles:
+    - deploy-nginxlb-image

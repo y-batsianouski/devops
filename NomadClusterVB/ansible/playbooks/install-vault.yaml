@@ -1,0 +1,5 @@
+- hosts: master_nodes
+  remote_user: root
+  become: yes
+  roles:
+    - setup-vault

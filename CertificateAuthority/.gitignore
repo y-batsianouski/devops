@@ -1,0 +1,16 @@
+outputs/*
+ca/serial*
+ca/index*
+ca/private/*
+ca/certs/*
+ca/newcerts/*
+ca/crl/*
+ca/csr/*
+ca/intermediate/serial*
+ca/intermediate/index*
+ca/intermediate/private/*
+ca/intermediate/certs/*
+ca/intermediate/newcerts/*
+ca/intermediate/crl/*
+ca/intermediate/crlnumber
+ca/intermediate/csr/*

@@ -1,0 +1,99 @@
+bind_addr = "{{ hostvars[inventory_hostname]['ansible_' + network_interface]['ipv4']['address'] }}"
+
+datacenter = "nomad"
+data_dir  = "/opt/nomad/data"
+
+addresses {
+  # Defaults to the node's hostname. If the hostname resolves to a loopback
+  # address you must manually configure advertise addresses.
+  http = "{{ hostvars[inventory_hostname]['ansible_' + network_interface]['ipv4']['address'] }}"
+  rpc  = "{{ hostvars[inventory_hostname]['ansible_' + network_interface]['ipv4']['address'] }}"
+  serf = "{{ hostvars[inventory_hostname]['ansible_' + network_interface]['ipv4']['address'] }}" # non-default ports may be specified
+}
+
+advertise {
+  # Defaults to the node's hostname. If the hostname resolves to a loopback
+  # address you must manually configure advertise addresses.
+  http = "{{ hostvars[inventory_hostname]['ansible_' + network_interface]['ipv4']['address'] }}"
+  rpc  = "{{ hostvars[inventory_hostname]['ansible_' + network_interface]['ipv4']['address'] }}"
+  serf = "{{ hostvars[inventory_hostname]['ansible_' + network_interface]['ipv4']['address'] }}" # non-default ports may be specified
+}
+
+{% if nomad_server == true %}
+server {
+  enabled          = true
+  bootstrap_expect = 3
+  rejoin_after_leave = true
+  retry_join       = [
+    "node-master-1.nomad.local",
+    "node-master-2.nomad.local",
+    "node-master-3.nomad.local"
+  ]
+  encrypt = "{{ nomad_encrypt_key }}"
+}
+{% else %}
+client {
+  enabled          = true
+  network_interface = "{{ network_interface }}"
+  servers       = [
+    "node-master-1.nomad.local",
+    "node-master-2.nomad.local",
+    "node-master-3.nomad.local"
+  ]
+  node_class = "{{ nomad_node_class }}"
+  {% if nomad_meta != false %}
+  meta {
+    {% for key, value in nomad_meta.iteritems() %}
+    "{{ key|e }}" = "{{ value|e }}"
+    {% endfor %}
+  }
+  {% endif %}
+}
+{% endif %}
+
+tls {
+  ca_file = "/opt/nomad/config/ssl/ca.cert.pem"
+  cert_file = "/opt/nomad/config/ssl/{{ inventory_hostname }}.crt"
+  key_file = "/opt/nomad/config/ssl/{{ inventory_hostname }}.key"
+  http = true
+  rpc = true
+  verify_https_client = true
+  {# verify_server_hostname = true #}
+}
+
+consul {
+  address = "{{ inventory_hostname }}:8501"
+  ssl = true
+
+  ca_file = "/opt/nomad/config/ssl/ca.cert.pem"
+  cert_file = "/opt/nomad/config/ssl/{{ inventory_hostname }}.crt"
+  key_file = "/opt/nomad/config/ssl/{{ inventory_hostname }}.key"
+
+  auto_advertise = true
+{% if nomad_server == true %}
+  server_auto_join = true
+  server_service_name = "nomad-server"
+{% else %}
+  client_auto_join = true
+  client_service_name = "nomad-agent"
+{% endif %}
+
+}
+
+{#
+vault {
+  enabled          = true
+
+  ca_file = "/opt/nomad/config/ssl/ca.cert.pem"
+  cert_file = "/opt/nomad/config/ssl/{{ inventory_hostname }}.crt"
+  key_file = "/opt/nomad/config/ssl/{{ inventory_hostname }}.key"
+  
+  address          = "https://node-master-1.nomad.local:8200"
+  tls_server_name = "{{ inventory_hostname }}"
+  
+{% if nomad_server == true %}
+  create_from_role = "nomad-cluster"
+  token = "{{ nomad_vault_token }}"
+{% endif %}
+}
+#}

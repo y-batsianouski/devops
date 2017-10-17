@@ -1,0 +1,49 @@
+---
+- name: install yum-utils package
+  yum:
+    name: yum-utils
+    state: latest
+    update_cache: yes
+
+- name: install device-mapper-persistent-data package
+  yum:
+    name: device-mapper-persistent-data
+    state: latest
+    update_cache: yes
+
+- name: install lvm2 package
+  yum:
+    name: lvm2
+    state: latest
+    update_cache: yes
+
+- name: add docker repository
+  command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+- name: import docker repository gpg key
+  command: rpm --import https://yum.dockerproject.org/gpg
+
+- name: install docker-ce
+  yum:
+    name: docker-ce
+    state: latest
+    update_cache: yes
+
+- name: install python-pip package
+  yum:
+    name: python-pip
+    state: latest
+    update_cache: yes
+
+- name: update pip
+  pip: 
+    name: pip
+
+- name: install python docker-py
+  pip: 
+    name: docker-py
+
+- name: "install docker-compose"
+  get_url:
+    url: https://github.com/docker/compose/releases/download/{{docker_compose_version}}/docker-compose-Linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: "0755"

@@ -1,0 +1,11 @@
+- file:
+    dest: /opt/nginx
+    state: directory
+
+- copy:
+    src: "{{ role_path }}/../../../docker/nginx/outputs/nginx-lb.tar"
+    dest: /opt/nginx/nginx-lb.tar
+
+- command: docker load -i /opt/nginx/nginx-lb.tar
+
+- command: docker run --dns=192.168.33.11 -p 80:80 -p 443:443 -d --rm nginx-lb:latest

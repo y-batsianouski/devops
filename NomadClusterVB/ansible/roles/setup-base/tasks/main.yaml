@@ -1,0 +1,36 @@
+---
+- name: enable epel repository
+  yum:
+    name: epel-release
+    state: latest
+    update_cache: yes
+
+- name: install net-tools package
+  yum:
+    name: net-tools
+    state: latest
+    update_cache: yes
+
+- name: install nano package
+  yum:
+    name: nano
+    state: latest
+    update_cache: yes
+
+- yum:
+    name: unzip
+    state: latest
+    update_cache: yes
+
+- name: update global bashrc
+  blockinfile:
+    path: /etc/bashrc
+    block: |
+      if [[ $EUID -eq 0 ]]; then
+        PROMPT_COLOR='\[\e[1;31m\]'
+        PROMPT_SIGN='#'
+      else
+              PROMPT_COLOR='\[\033[36m\]'
+              PROMPT_SIGN='$'
+      fi
+      PS1="\n\[\033[33;1m\]\w\$(LAST_CODE=\$?; if [[ \$LAST_CODE == 0 ]]; then echo \"\[\033[01;32m\]\"; else echo \"\[\033[01;31m\]\"; fi; echo \$LAST_CODE) \[\033[m\][$PROMPT_COLOR\u\[\033[m\]@\[\033[32m\]\h\[\033[m\]] $PROMPT_SIGN \[\e[0;37m\]"

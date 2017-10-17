@@ -1,0 +1,4 @@
+nomad_node_class: private
+
+nomad_meta:
+  private: true
